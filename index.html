@@ -1,238 +1,122 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Keuangan Jualan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Trading</title>
 
 <style>
-*{
-    box-sizing:border-box;
-    font-family:Arial, sans-serif;
-}
-
-html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-}
-
 body{
-    background:url("https://files.catbox.moe/t234u7.jpg") center/cover no-repeat;
+background:#0f0f0f;
+color:white;
+font-family:Arial;
+text-align:center;
+padding:30px;
 }
 
-/* APP FULL SCREEN */
-.app{
-    width:100vw;
-    height:100vh;
-    background:rgba(0,0,0,.65);
-    color:#fff;
-    padding:12px;
-    display:flex;
-    flex-direction:column;
+.box{
+background:#1e1e1e;
+padding:20px;
+border-radius:10px;
+max-width:320px;
+margin:auto;
 }
 
-/* HEADER */
-h2{
-    text-align:center;
-    margin:6px 0 10px;
+button,input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:none;
+border-radius:6px;
 }
 
-/* INPUT */
-.input{
-    display:flex;
-    gap:6px;
-    margin-bottom:8px;
-}
-
-.input input{
-    flex:1;
-    padding:9px;
-    border:none;
-    border-radius:6px;
-    font-size:14px;
-}
-
-/* BUTTON TAMBAH */
-.btn-group{
-    display:flex;
-    gap:6px;
-    margin-bottom:10px;
-}
-
-button{
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-.income-btn,
-.expense-btn{
-    flex:1;
-    padding:10px;
-    font-size:14px;
-    font-weight:bold;
-    color:#fff;
-}
-
-.income-btn{background:#28a745}
-.expense-btn{background:#ffc107;color:#000}
-
-/* SALDO */
-.balance{
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-    margin-bottom:6px;
-}
-
-/* LIST */
-.section{
-    flex:1;
-    overflow-y:auto;
-    margin-bottom:6px;
-}
-
-.section h3{
-    margin:6px 0;
-    font-size:15px;
-}
-
-.item{
-    background:rgba(255,255,255,.1);
-    padding:8px;
-    border-radius:6px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:5px;
-    font-size:13px;
-}
-
-.delete{
-    background:#dc3545;
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    text-align:center;
-    line-height:22px;
-    font-weight:bold;
-    font-size:13px;
-}
-
-/* RESET KECIL */
-.reset-btn{
-    align-self:center;
-    padding:6px 14px;
-    font-size:12px;
-    background:#b02a37;
-    color:#fff;
-    margin-top:6px;
-}
+.buy{background:#00c853;color:white;}
+.sell{background:#ff1744;color:white;}
+.deposit{background:#2962ff;color:white;}
+.withdraw{background:#ff9100;color:white;}
 </style>
+
 </head>
-
 <body>
-<div class="app">
 
-<h2>Catatan Keuangan</h2>
+<div class="box">
 
-<div class="balance" id="saldo">Saldo: Rp 0</div>
+<h2>Mini Trading</h2>
 
-<div class="input">
-    <input id="desc" placeholder="Keterangan">
-    <input id="amount" type="number" placeholder="Nominal">
-</div>
+<h3>Balance: $<span id="saldo">100</span></h3>
+<h3>Price: $<span id="price">100</span></h3>
+<h4>Asset: <span id="asset">0</span></h4>
 
-<div class="btn-group">
-    <button class="income-btn" onclick="addIncome()">+ Pemasukan</button>
-    <button class="expense-btn" onclick="addExpense()">- Pengeluaran</button>
-</div>
+<input type="number" id="amount" placeholder="Jumlah">
 
-<div class="section">
-    <h3>📥 Pemasukan</h3>
-    <div id="incomeList"></div>
-</div>
+<button class="deposit" onclick="deposit()">Deposit</button>
+<button class="withdraw" onclick="withdraw()">Withdraw</button>
 
-<div class="section">
-    <h3>📤 Pengeluaran</h3>
-    <div id="expenseList"></div>
-</div>
-
-<button class="reset-btn" onclick="resetSaldo()">Reset Saldo</button>
+<button class="buy" onclick="buy()">BUY</button>
+<button class="sell" onclick="sell()">SELL</button>
 
 </div>
 
 <script>
-/* STORAGE */
-let incomes = JSON.parse(localStorage.getItem("incomes")) || [];
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
-function save(){
-    localStorage.setItem("incomes", JSON.stringify(incomes));
-    localStorage.setItem("expenses", JSON.stringify(expenses));
+let saldo = 100
+let price = 100
+let asset = 0
+
+function update(){
+document.getElementById("saldo").innerText = saldo.toFixed(2)
+document.getElementById("price").innerText = price.toFixed(2)
+document.getElementById("asset").innerText = asset.toFixed(4)
 }
 
-function render(){
-    let saldo=0;
-    incomeList.innerHTML="";
-    expenseList.innerHTML="";
-
-    incomes.forEach((i,idx)=>{
-        saldo+=i.amount;
-        incomeList.innerHTML+=`
-        <div class="item">
-            <span>${i.desc} +Rp ${i.amount.toLocaleString()}</span>
-            <div class="delete" onclick="delIncome(${idx})">×</div>
-        </div>`;
-    });
-
-    expenses.forEach((e,idx)=>{
-        saldo-=e.amount;
-        expenseList.innerHTML+=`
-        <div class="item">
-            <span>${e.desc} -Rp ${e.amount.toLocaleString()}</span>
-            <div class="delete" onclick="delExpense(${idx})">×</div>
-        </div>`;
-    });
-
-    saldoEl = document.getElementById("saldo");
-    saldoEl.innerText="Saldo: Rp "+saldo.toLocaleString();
-    save();
+function deposit(){
+let a = Number(amount.value)
+saldo += a
+update()
 }
 
-function addIncome(){
-    if(!desc.value || amount.value<=0) return alert("Isi yang bener 😭");
-    incomes.push({desc:desc.value,amount:+amount.value});
-    desc.value="";amount.value="";
-    render();
+function withdraw(){
+let a = Number(amount.value)
+if(a > saldo){
+alert("saldo kurang")
+return
+}
+saldo -= a
+update()
 }
 
-function addExpense(){
-    if(!desc.value || amount.value<=0) return alert("Isi yang bener 😭");
-    expenses.push({desc:desc.value,amount:+amount.value});
-    desc.value="";amount.value="";
-    render();
+function buy(){
+let a = Number(amount.value)
+if(a > saldo){
+alert("saldo kurang")
+return
 }
 
-function delIncome(i){
-    incomes.splice(i,1);
-    render();
+let qty = a / price
+asset += qty
+saldo -= a
+update()
 }
 
-function delExpense(i){
-    expenses.splice(i,1);
-    render();
+function sell(){
+let a = Number(amount.value)
+if(a > asset){
+alert("asset kurang")
+return
 }
 
-function resetSaldo(){
-    if(confirm("Yakin reset semua data?")){
-        incomes=[];expenses=[];
-        render();
-    }
+let uang = a * price
+asset -= a
+saldo += uang
+update()
 }
 
-render();
+setInterval(()=>{
+price += (Math.random() - 0.5) * 2
+update()
+},2000)
+
+update()
+
 </script>
 
 </body>
